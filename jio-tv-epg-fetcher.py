@@ -7,9 +7,20 @@ from tqdm import tqdm
 from xml.dom import minidom
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0",
-    "Referer": "https://jiotv.com/"
+    "User-Agent": "JioTV/5.0.4 (Linux;Android 11) ExoPlayerLib/2.11.7",
+    "Referer": "https://jiotv.com/",
+    "os": "android",
+    "devicetype": "phone",
+    "usertype": "JIO",
+    "version": "343",
+    "x-platform": "android",
+    "x-devicetype": "phone",
+    "x-user-type": "JIO",
+    "x-version": "343",
+    "accept-encoding": "gzip",
+    "accept": "application/json"
 }
+
 
 CHANNELS_URL = "https://jiotvapi.cdn.jio.com/apis/v3.0/getMobileChannelList/get/?langId=6&devicetype=phone&os=android&usertype=JIO&version=343"
 EPG_URL_TEMPLATE = "https://jiotvapi.cdn.jio.com/apis/v1.3/getepg/get?channel_id={channel_id}&offset={offset}"
