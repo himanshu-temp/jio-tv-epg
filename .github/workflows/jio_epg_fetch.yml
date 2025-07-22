@@ -2,7 +2,7 @@ name: 📅 Daily JioTV EPG Fetch
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Runs daily at 03:00 AM UTC (8:30 AM IST)
+    - cron: '30 1 * * *'  # Every day at 06:30 IST
   workflow_dispatch:
 
 permissions:
@@ -13,46 +13,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📁 Checkout repository
+      - name: 📥 Checkout repo
         uses: actions/checkout@v3
 
-      - name: 🐍 Set up Python
+      - name: 🐍 Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
       - name: 📦 Install dependencies
-        run: pip install -r requirements.txt || pip install requests tqdm
+        run: pip install requests tqdm
 
-      - name: ▶️ Run EPG fetcher script
+      - name: ▶️ Run EPG Fetcher
         run: python jio-tv-epg-fetcher.py
 
-      - name: 📂 Check if XML file was generated
-        id: check_file
+      - name: 📂 Check if output exists
+        id: check_output
         run: |
-          if [ -f "jiotv_epg.xml" ]; then
+          if [ -f "jiotv_epg.xml.gz" ]; then
             echo "file_exists=true" >> $GITHUB_ENV
-            echo "✅ EPG XML file generated"
           else
             echo "file_exists=false" >> $GITHUB_ENV
-            echo "❌ No XML file found"
           fi
 
-      - name: 🗜️ Compress EPG XML
-        if: env.file_exists == 'true'
-        run: gzip -c jiotv_epg.xml > jiotv_epg.xml.gz
-
-      - name: 📝 Add and Commit compressed file
+      - name: 🔐 Configure Git Auth
         if: env.file_exists == 'true'
         run: |
           git config user.name "EPG Bot"
           git config user.email "epg-bot@example.com"
-          echo "jiotv_epg.xml" >> .gitignore
-          git add jiotv_epg.xml.gz .gitignore
-          git commit -m "🔄 Update JioTV EPG [Auto]" || echo "No changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
-      - name: 🚀 Push changes to repository
+      - name: ✅ Commit and push
         if: env.file_exists == 'true'
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git add jiotv_epg.xml.gz
+          git commit -m "📺 Daily JioTV EPG update [auto]" || echo "No changes to commit"
           git push origin HEAD
