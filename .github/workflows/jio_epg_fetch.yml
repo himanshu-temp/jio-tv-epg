@@ -25,7 +25,7 @@ jobs:
         run: pip install -r requirements.txt || pip install requests tqdm
 
       - name: ▶️ Run EPG fetcher script
-        run: python jio_epg_fetcher.py
+        run: python jio-tv-epg-fetcher.py
 
       - name: 📂 Check if XML file was generated
         id: check_file
