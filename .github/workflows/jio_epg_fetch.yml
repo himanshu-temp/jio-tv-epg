@@ -1,0 +1,58 @@
+name: 📅 Daily JioTV EPG Fetch
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Runs daily at 03:00 AM UTC (8:30 AM IST)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📁 Checkout repository
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt || pip install requests tqdm
+
+      - name: ▶️ Run EPG fetcher script
+        run: python jio_epg_fetcher.py
+
+      - name: 📂 Check if XML file was generated
+        id: check_file
+        run: |
+          if [ -f "jiotv_epg.xml" ]; then
+            echo "file_exists=true" >> $GITHUB_ENV
+            echo "✅ EPG XML file generated"
+          else
+            echo "file_exists=false" >> $GITHUB_ENV
+            echo "❌ No XML file found"
+          fi
+
+      - name: 🗜️ Compress EPG XML
+        if: env.file_exists == 'true'
+        run: gzip -c jiotv_epg.xml > jiotv_epg.xml.gz
+
+      - name: 📝 Add and Commit compressed file
+        if: env.file_exists == 'true'
+        run: |
+          git config user.name "EPG Bot"
+          git config user.email "epg-bot@example.com"
+          echo "jiotv_epg.xml" >> .gitignore
+          git add jiotv_epg.xml.gz .gitignore
+          git commit -m "🔄 Update JioTV EPG [Auto]" || echo "No changes to commit"
+
+      - name: 🚀 Push changes to repository
+        if: env.file_exists == 'true'
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push origin HEAD
